@@ -1,1 +1,3 @@
-# Lead-pipeline
+Stack
+
+ts, tailwind, next, supabase
