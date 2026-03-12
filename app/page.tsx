@@ -38,7 +38,7 @@ export default function Home() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold tracking-tighter mb-6">
-            DataForge <span className="text-emerald-500">AI</span>
+            DataForge V2<span className="text-emerald-500">AI</span>
           </h1>
           <p className="text-zinc-400 text-lg mb-10 max-w-lg mx-auto">
             The enterprise CSV transformation engine. Sign in to manage your data projects securely.

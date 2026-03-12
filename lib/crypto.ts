@@ -1,6 +1,7 @@
 import CryptoJS from 'crypto-js';
+import { config } from './config';
 
-const SECRET_KEY = process.env.NEXT_PUBLIC_ENCRYPTION_KEY
+const SECRET_KEY = config.encryptionKey
 
 if (!SECRET_KEY) {
     throw new Error('ENCRYPTION_KEY is not set in your .env file');
@@ -25,3 +26,4 @@ export const decryptData = (ciphertext: string): string => {
         return "";
     }
 };
+
