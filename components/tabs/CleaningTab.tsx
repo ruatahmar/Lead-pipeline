@@ -135,20 +135,26 @@ export default function CleaningTab() {
 
     // Row Operations 
     const handleDeduplicate = () => {
-        const seen = new Set();
-        const newData = csvData.filter(row => {
-            const str = JSON.stringify(row);
-            if (seen.has(str)) return false;
-            seen.add(str);
-            return true;
-        });
-        setTimeout(() => setCsvData(newData), 0);
+        setTimeout(() => {
+            const seen = new Set();
+            const newData = csvData.filter(row => {
+                const str = JSON.stringify(row);
+                if (seen.has(str)) return false;
+                seen.add(str);
+                return true;
+            });
+            setCsvData(newData);
+        }, 0)
+
     };
     const handleRemoveEmptyRows = () => {
-        const newData = csvData.filter(row =>
-            Object.values(row).some(val => val !== null && val !== undefined && val !== '')
-        );
-        setTimeout(() => setCsvData(newData), 0);
+        setTimeout(() => {
+            const newData = csvData.filter(row =>
+                Object.values(row).some(val => val !== null && val !== undefined && val !== '')
+            );
+            setCsvData(newData);
+        }, 0)
+
     };
 
     // // Column Operations 
@@ -168,14 +174,25 @@ export default function CleaningTab() {
         setCleaningProgress({ done: 0, total: csvData.length });
 
         const newData = [...csvData];
-        const CONCURRENCY = 20;
-        const processRow = async (i: number) => {
-            const raw = String(newData[i][companyCol] || '').trim();
+        const BATCH_SIZE = 10;
+        const CONCURRENCY = 5;
 
-            if (!raw) {
-                setCleaningProgress(p => ({ ...p, done: p.done + 1 }));
-                return;
+        const processBatch = async (startIdx: number) => {
+            const batch = [];
+            const indices = [];
+
+            for (let i = startIdx; i < Math.min(startIdx + BATCH_SIZE, newData.length); i++) {
+                const raw = String(newData[i][companyCol] || '').trim();
+                if (raw) {
+                    batch.push(`${batch.length + 1}. ${raw}`);
+                    indices.push(i);
+                } else {
+                    newData[i] = { ...newData[i], company_clean: '' };
+                    setCleaningProgress(p => ({ ...p, done: p.done + 1 }));
+                }
             }
+
+            if (batch.length === 0) return;
 
             try {
                 const response = await fetch('/api/openai', {
@@ -184,29 +201,45 @@ export default function CleaningTab() {
                     body: JSON.stringify({
                         messages: [
                             { role: 'system', content: PROMPT_BRAND_KEYWORDS },
-                            { role: 'user', content: raw }
+                            { role: 'user', content: batch.join('\n') }
                         ],
-                        max_tokens: 20,
+                        max_tokens: 200,
                     }),
                 });
                 const data = await response.json();
-                const llmResult = data.result?.trim();
-                newData[i] = { ...newData[i], company_clean: llmResult || raw };
+                const lines = data.result?.trim().split('\n') || [];
+
+                indices.forEach((rowIdx, i) => {
+                    // parse "1. CompanyName" → "CompanyName"
+                    const line = lines[i]?.replace(/^\d+\.\s*/, '').trim();
+                    newData[rowIdx] = {
+                        ...newData[rowIdx],
+                        company_clean: line || String(newData[rowIdx][companyCol])
+                    };
+                });
             } catch {
-                newData[i] = { ...newData[i], company_clean: raw };
+                indices.forEach(rowIdx => {
+                    newData[rowIdx] = {
+                        ...newData[rowIdx],
+                        company_clean: String(newData[rowIdx][companyCol])
+                    };
+                });
             }
 
-            setCleaningProgress(p => ({ ...p, done: p.done + 1 }));
+            setCleaningProgress(p => ({ ...p, done: p.done + indices.length }));
+            setCsvData([...newData]);
         };
 
-        // process in chunks of CONCURRENCY
-        for (let i = 0; i < newData.length; i += CONCURRENCY) {
-            const chunk = Array.from(
-                { length: Math.min(CONCURRENCY, newData.length - i) },
-                (_, j) => processRow(i + j)
-            );
+        // build batch start indices
+        const batchStarts = [];
+        for (let i = 0; i < newData.length; i += BATCH_SIZE) {
+            batchStarts.push(i);
+        }
+
+        // process batches with concurrency
+        for (let i = 0; i < batchStarts.length; i += CONCURRENCY) {
+            const chunk = batchStarts.slice(i, i + CONCURRENCY).map(start => processBatch(start));
             await Promise.all(chunk);
-            setCsvData([...newData]);
         }
 
         setIsCleaningCompanies(false);

@@ -25,7 +25,7 @@ export default function Projects() {
         try {
             const { data, error } = await supabase
                 .from('projects')
-                .select('*')
+                .select('id, name, row_count, created_at')
                 .eq('user_id', user.id)
                 .order('created_at', { ascending: false });
 
@@ -47,11 +47,17 @@ export default function Projects() {
         setLoadingProjectIds(prev => [...prev, project.id]);
 
         try {
-            // TODO: fetch project data from supabase
-            // decrypt it with decryptData()
-            const decrypted = decryptData(project.data)
+            const { data, error } = await supabase
+                .from('projects')
+                .select('data')
+                .eq('id', project.id)
+                .single();
+
+            if (error) throw error;
+
+            const decrypted = decryptData(data.data)
             if (!decrypted) throw new Error('Failed to decrypt project data')
-            // parse with Papa.parse()
+
             const parsed = Papa.parse(decrypted, {
                 header: true,
                 dynamicTyping: true,

@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { useAppStore } from '@/lib/store';
 import { exportCSV } from '@/lib/csv-utils';
 import { Sidebar } from '@/components/Sidebar';
@@ -9,11 +11,19 @@ import TransformationControls from '@/components/TramsformationControls';
 import SaveProjectButton from '@/components/SaveProjectButton';
 // import ApiKeyInput from '@/components/ApiKeyInput';
 // import Dashboard from '@/components/Dashboard';
+import { useRouter } from 'next/navigation';
 import { Download } from 'lucide-react';
 
 export default function WorkspacePage() {
     const { csvData } = useAppStore();
-
+    const { user, loading } = useAuth()
+    const router = useRouter()
+    useEffect(() => {
+        if (!loading && !user) router.push('/');
+    }, [user, loading]);
+    if (loading) return <div className="h-screen bg-[#050505] flex items-center justify-center">
+        <div className="animate-spin w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full" />
+    </div>;
     return (
         <div className="h-screen bg-[#050505] text-white flex overflow-hidden">
             <Sidebar />
