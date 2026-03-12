@@ -20,22 +20,26 @@ export const AuthProvider = (props: { children: React.ReactNode }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        //checks if user is logged in 
+        let mounted = true;
+
         supabase.auth.getSession().then((response) => {
+            if (!mounted) return;
             const session = response.data.session;
             setUser(session?.user ?? null);
             setLoading(false);
         });
 
-        // listen for login/logout events
         const authListener = supabase.auth.onAuthStateChange((_event, session) => {
+            if (!mounted) return;
             setUser(session?.user ?? null);
             setLoading(false);
         });
 
-
-        return () => authListener.data.subscription.unsubscribe();
-    }, [])
+        return () => {
+            mounted = false;
+            authListener.data.subscription.unsubscribe();
+        };
+    }, []);
 
     const signInWithGoogle = async () => {
         await supabase.auth.signInWithOAuth({
