@@ -40,7 +40,7 @@ const LEGAL_SUFFIXES = [
     'pvt ltd', 'pvt. ltd', 'pvt. ltd.', 'private limited', 'private ltd',
     'ltd', 'ltd.', 'limited', 'inc', 'inc.', 'incorporated',
     'llc', 'llc.', 'l.l.c', 'corp', 'corp.', 'corporation',
-    'gmbh', 'ag', 'sa', 'sas', 'bv', 'nv', 'pty', 'pty ltd',
+    'gmbh', 'ag', 'sas', 'bv', 'nv', 'pty', 'pty ltd',
     'plc', 'lp', 'llp', 'co.', '& co', '& co.', 'co'
 ];
 

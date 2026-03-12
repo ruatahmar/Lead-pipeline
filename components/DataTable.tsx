@@ -5,7 +5,7 @@ import { useState, memo } from 'react';
 import { GripHorizontal, Trash2, ChevronDown } from 'lucide-react';
 
 function DataTable() {
-    const { csvData, columnOrder, setColumnOrder, updateCell, setCsvData } = useAppStore();
+    const { csvData, columnOrder, setColumnOrder, updateCell, setCsvData, hiddenCols } = useAppStore();
     const [draggedCol, setDraggedCol] = useState<string | null>(null);
     const [editingCell, setEditingCell] = useState<{ row: number; col: string } | null>(null);
     const [editValue, setEditValue] = useState('');
@@ -13,7 +13,8 @@ function DataTable() {
 
     if (csvData.length === 0) return null;
 
-    let headers = columnOrder.length > 0 ? columnOrder : Object.keys(csvData[0]);
+    let headers = (columnOrder.length > 0 ? columnOrder : Object.keys(csvData[0]))
+        .filter(h => !hiddenCols.includes(h));
 
     // Sync headers if new columns appear
     const allKeys = Object.keys(csvData[0]);

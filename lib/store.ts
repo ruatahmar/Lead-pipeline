@@ -19,7 +19,13 @@ interface AppState {
 
     // Cell editing
     updateCell: (rowIndex: number, column: string, value: string | number | boolean | null) => void;
+
+    // Hidden columns
+    hiddenCols: string[];
+    setHiddenCols: (cols: string[]) => void;
+
 }
+
 
 export const useAppStore = create<AppState>((set) => ({
     csvData: [],
@@ -41,4 +47,7 @@ export const useAppStore = create<AppState>((set) => ({
         }
         return { csvData: newData };
     }),
+
+    hiddenCols: [],
+    setHiddenCols: (cols) => set({ hiddenCols: cols }),
 }));
